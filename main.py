@@ -730,49 +730,64 @@ async def txt_handler(bot: Client, m: Message):
 
                 base_clean = base_with_params.split(".mkv")[0] + ".mkv"
 
-                if "static-trans-v1.classx.co.in" in url:
-                    base_clean = base_clean.replace("https://static-trans-v1.classx.co.in", "https://appx-transcoded-videos-mcdn.akamai.net.in")
-                elif "static-trans-v2.classx.co.in" in url:
-                    base_clean = base_clean.replace("https://static-trans-v2.classx.co.in", "https://transcoded-videos-v2.classx.co.in")
+                if "appxsignurl.vercel.app/appx/" in url:
+                        try:
+                            # Step 1: Directly use the original URL
+                            response = requests.get(url.strip(), timeout=10)
+                            data = response.json()
 
-                url = f"{base_clean}*{signature}"
-            
-            elif "https://static-rec.classx.co.in/drm/" in url:
-                base_with_params, signature = url.split("*")
+                            # Step 2: Extract actual PDF URL
+                            pdf_url = data.get("pdf_url")
+                            if pdf_url:
+                                url = pdf_url.strip()   # overwrite with real downloadable link
+                            else:
+                                print("No pdf_url found in response JSON.")
+                                # fallback: keep original URL
+                                # url remains unchanged
 
-                base_clean = base_with_params.split("?")[0]
+                            # Step 3: Extract title if available
+                            namef = data.get("title", name1)
 
-                base_clean = base_clean.replace("https://static-rec.classx.co.in", "https://appx-recordings-mcdn.akamai.net.in")
+                            # Step 4: Mark referer requirement
+                            need_referer = True
+                        except Exception as e:
+                            print(f"Error fetching AppxSignURL JSON: {e}")
+                            need_referer = True
+                            namef = name1
+                    
 
-                url = f"{base_clean}*{signature}"
+                    elif "static-db.appx.co.in" in url:
+                           
+                           need_referer = True
+                           namef = name1
+                    elif "static-db-v2.appx.co.in" in url:
+                           
+                           need_referer = True
+                           namef = name1
 
-            elif "https://static-wsb.classx.co.in/" in url:
-                clean_url = url.split("?")[0]
+                    elif "static-db-v2.appx.co.in" in url:
+                        filename = urlparse(url).path.split("/")[-1]
+                        url = f"https://appx-content-v2.classx.co.in/paid_course4/{filename}"
+                        need_referer = True
+                        namef = name1
+                    else:
+                        if topic == "/yes":
+                            namef = f'{v_name}'
+                        else:
+                            try:
+                                response = requests.get(url)
+                                if response.status_code == 200:
+                                    try:
+                                        data = response.json()
+                                        namef = data.get("title", name1).replace("nn", "")
+                                    except:
+                                        namef = name1
+                                else:
+                                    namef = name1
+                            except:
+                                namef = name1
+                        need_referer = True
 
-                clean_url = clean_url.replace("https://static-wsb.classx.co.in", "https://appx-wsb-gcp-mcdn.akamai.net.in")
-
-                url = clean_url
-
-            elif "https://static-db.classx.co.in/" in url:
-                if "*" in url:
-                    base_url, key = url.split("*", 1)
-                    base_url = base_url.split("?")[0]
-                    base_url = base_url.replace("https://static-db.classx.co.in", "https://appxcontent.kaxa.in")
-                    url = f"{base_url}*{key}"
-                else:
-                    base_url = url.split("?")[0]
-                    url = base_url.replace("https://static-db.classx.co.in", "https://appxcontent.kaxa.in")
-
-
-            elif "https://static-db-v2.classx.co.in/" in url:
-                if "*" in url:
-                    base_url, key = url.split("*", 1)
-                    base_url = base_url.split("?")[0]
-                    base_url = base_url.replace("https://static-db-v2.classx.co.in", "https://appx-content-v2.classx.co.in")
-                    url = f"{base_url}*{key}"
-                else:
-                    base_url = url.split("?")[0]
-                    url = base_url.replace("https://static-db-v2.classx.co.in", "https://appx-content-v2.classx.co.in")
 
 
             elif "https://cpvod.testbook.com/" in url or "classplusapp.com/drm/" in url:
